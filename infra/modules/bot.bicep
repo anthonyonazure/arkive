@@ -24,8 +24,9 @@ resource botService 'Microsoft.BotService/botServices@2022-09-15' = {
     displayName: 'Arkive Approval Bot'
     description: 'Teams bot for archive approval workflows'
     endpoint: 'https://${baseName}-func-${environment}.azurewebsites.net/api/messages'
-    msaAppType: 'MultiTenant'
+    msaAppType: 'SingleTenant'
     msaAppId: '00000000-0000-0000-0000-000000000000' // Placeholder - configure in Epic 5
+    msaAppTenantId: '75a7c0d1-4973-4ce9-a2ca-f4a0d9a109ca'
   }
   tags: {
     environment: environment

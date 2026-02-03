@@ -15,11 +15,17 @@ param sqlAdminObjectId string
 @description('SQL admin login name')
 param sqlAdminLoginName string = 'arkive-admin'
 
-var resourceSuffix = '${baseName}-${environment}'
+@description('Azure region for Static Web App (limited availability)')
+param staticWebAppLocation string = 'eastus2'
+
+@description('Azure region for Key Vault (may differ if recovered from soft-delete)')
+param keyVaultLocation string = location
+
+var deploySuffix = '${baseName}-${environment}'
 
 // SQL Database
 module sql 'modules/sql.bicep' = {
-  name: 'sql-${resourceSuffix}'
+  name: 'sql-${deploySuffix}'
   params: {
     location: location
     environment: environment
@@ -31,7 +37,7 @@ module sql 'modules/sql.bicep' = {
 
 // Storage Account
 module storage 'modules/storage.bicep' = {
-  name: 'storage-${resourceSuffix}'
+  name: 'storage-${deploySuffix}'
   params: {
     location: location
     environment: environment
@@ -39,11 +45,11 @@ module storage 'modules/storage.bicep' = {
   }
 }
 
-// Key Vault
+// Key Vault (location may differ if recovered from soft-delete)
 module keyvault 'modules/keyvault.bicep' = {
-  name: 'keyvault-${resourceSuffix}'
+  name: 'keyvault-${deploySuffix}'
   params: {
-    location: location
+    location: keyVaultLocation
     environment: environment
     baseName: baseName
   }
@@ -51,7 +57,7 @@ module keyvault 'modules/keyvault.bicep' = {
 
 // Service Bus
 module servicebus 'modules/servicebus.bicep' = {
-  name: 'servicebus-${resourceSuffix}'
+  name: 'servicebus-${deploySuffix}'
   params: {
     location: location
     environment: environment
@@ -61,7 +67,7 @@ module servicebus 'modules/servicebus.bicep' = {
 
 // Monitoring (Application Insights + Log Analytics)
 module monitoring 'modules/monitoring.bicep' = {
-  name: 'monitoring-${resourceSuffix}'
+  name: 'monitoring-${deploySuffix}'
   params: {
     location: location
     environment: environment
@@ -71,7 +77,7 @@ module monitoring 'modules/monitoring.bicep' = {
 
 // Azure Functions
 module functions 'modules/functions.bicep' = {
-  name: 'functions-${resourceSuffix}'
+  name: 'functions-${deploySuffix}'
   params: {
     location: location
     environment: environment
@@ -85,29 +91,30 @@ module functions 'modules/functions.bicep' = {
   }
 }
 
-// Static Web App (Frontend)
+// Static Web App (Frontend) - deployed to eastus2 (not available in all regions)
 module staticwebapp 'modules/staticwebapp.bicep' = {
-  name: 'staticwebapp-${resourceSuffix}'
+  name: 'staticwebapp-${deploySuffix}'
   params: {
-    location: location
+    location: staticWebAppLocation
     environment: environment
     baseName: baseName
   }
 }
 
-// Bot Service (placeholder for Epic 5)
-module bot 'modules/bot.bicep' = {
-  name: 'bot-${resourceSuffix}'
-  params: {
-    location: location
-    environment: environment
-    baseName: baseName
-  }
-}
+// Bot Service — skipped for initial deployment (requires real Entra App Registration)
+// Uncomment when ready to configure Teams bot in Epic 5:
+// module bot 'modules/bot.bicep' = {
+//   name: 'bot-${deploySuffix}'
+//   params: {
+//     location: location
+//     environment: environment
+//     baseName: baseName
+//   }
+// }
 
 // Role assignments for Managed Identity
 module roleAssignments 'modules/role-assignments.bicep' = {
-  name: 'roles-${resourceSuffix}'
+  name: 'roles-${deploySuffix}'
   params: {
     functionsPrincipalId: functions.outputs.principalId
     storageAccountName: storage.outputs.storageAccountName

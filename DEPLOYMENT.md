@@ -16,8 +16,10 @@ Step-by-step instructions for deploying Arkive to Azure. This guide assumes you 
 8. [Deploy the Frontend (Static Web Apps)](#8-deploy-the-frontend-static-web-apps)
 9. [Configure Key Vault Secrets](#9-configure-key-vault-secrets)
 10. [Configure Frontend Environment Variables](#10-configure-frontend-environment-variables)
-11. [Verify the Deployment](#11-verify-the-deployment)
-12. [Troubleshooting](#12-troubleshooting)
+11. [Configure CORS (Cross-Origin Requests)](#11-configure-cors-cross-origin-requests)
+12. [Verify the Deployment](#12-verify-the-deployment)
+13. [Troubleshooting](#13-troubleshooting)
+14. [Redeployment (Updating Code)](#14-redeployment-updating-code)
 
 ---
 
@@ -74,10 +76,10 @@ az account set --subscription "YOUR-SUBSCRIPTION-ID"
 
 ### 2a. Create a Resource Group
 
-All Arkive resources will live in one resource group:
+All Arkive resources will live in one resource group. Use `eastus2` — some Azure services (Static Web Apps, SQL) have limited availability in `eastus`:
 
 ```powershell
-az group create --name rg-arkive-dev --location eastus
+az group create --name rg-arkive-dev --location eastus2
 ```
 
 ### 2b. Create an Entra ID Security Group for SQL Admin
@@ -114,23 +116,27 @@ Edit the parameter file `infra/parameters/dev.bicepparam`:
 using '../main.bicep'
 
 param environment = 'dev'
-param location = 'eastus'
+param location = 'eastus2'
 param baseName = 'arkive'
 param sqlAdminObjectId = 'PASTE-YOUR-GROUP-OBJECT-ID-HERE'
 param sqlAdminLoginName = 'arkive-dev-admins'
+param keyVaultLocation = 'eastus2'
 ```
 
 Replace `PASTE-YOUR-GROUP-OBJECT-ID-HERE` with the Object ID from Step 2b.
+
+**Note on `keyVaultLocation`:** If you previously deployed and deleted the resource group, Key Vault may be in a "soft-deleted" state in its original region. You'll need to either purge it (`az keyvault purge --name arkive-kv-dev`) or recover it (`az keyvault recover --name arkive-kv-dev`) and set `keyVaultLocation` to the region where the vault was recovered.
 
 ---
 
 ## 4. Deploy Azure Infrastructure
 
-This single command provisions all Azure resources (SQL, Storage, Key Vault, Functions, Service Bus, Static Web App, Application Insights, Bot Service):
+This single command provisions all Azure resources (SQL, Storage, Key Vault, Functions, Service Bus, Static Web App, Application Insights):
 
 ```powershell
 az deployment group create `
   --resource-group rg-arkive-dev `
+  --name arkive-deploy `
   --template-file infra/main.bicep `
   --parameters infra/parameters/dev.bicepparam
 ```
@@ -141,9 +147,11 @@ This runs for several minutes. When complete, it outputs the resource names. **S
 # View the deployment outputs anytime
 az deployment group show `
   --resource-group rg-arkive-dev `
-  --name main `
+  --name arkive-deploy `
   --query properties.outputs
 ```
+
+**Note:** If the deployment partially fails (e.g., ARM transient errors), just re-run the same command. Bicep deployments are idempotent — already-created resources are updated, missing ones are created.
 
 Key outputs you'll reference later:
 
@@ -152,7 +160,7 @@ Key outputs you'll reference later:
 | `functionsAppName` | `arkive-func-dev` | Deploying backend code |
 | `functionsDefaultHostName` | `arkive-func-dev.azurewebsites.net` | Frontend API URL |
 | `staticWebAppName` | `arkive-web-dev` | Deploying frontend code |
-| `staticWebAppDefaultHostName` | `arkive-web-dev.azurestaticapps.net` | Your app's URL |
+| `staticWebAppDefaultHostName` | `kind-plant-0fbd74b0f.4.azurestaticapps.net` | Your app's URL |
 | `sqlServerFqdn` | `arkive-sql-dev.database.windows.net` | Database migrations |
 | `sqlDatabaseName` | `arkive-db-dev` | Database migrations |
 | `keyVaultName` | `arkive-kv-dev` | Storing secrets |
@@ -477,9 +485,31 @@ After setting these, **rebuild and redeploy the frontend** (Step 8) for the chan
 
 ---
 
-## 11. Verify the Deployment
+## 11. Configure CORS (Cross-Origin Requests)
 
-### 11a. Check Azure Resources
+The frontend (Static Web App) makes API calls to the backend (Azure Functions). You need to allow the frontend's origin:
+
+```powershell
+# Allow the Static Web App to call the Functions API
+az functionapp cors add `
+  --name arkive-func-dev `
+  --resource-group rg-arkive-dev `
+  --allowed-origins "https://kind-plant-0fbd74b0f.4.azurestaticapps.net"
+
+# Also allow localhost for development
+az functionapp cors add `
+  --name arkive-func-dev `
+  --resource-group rg-arkive-dev `
+  --allowed-origins "http://localhost:3000"
+```
+
+Replace the Static Web App URL with your actual `staticWebAppDefaultHostName` from Step 4 (prefixed with `https://`).
+
+---
+
+## 12. Verify the Deployment
+
+### 12a. Check Azure Resources
 
 ```powershell
 # List all resources in the resource group
@@ -488,7 +518,7 @@ az resource list --resource-group rg-arkive-dev --output table
 
 You should see approximately 10+ resources (SQL server, database, storage accounts, function app, static web app, key vault, service bus, app insights, etc.).
 
-### 11b. Test the Backend API
+### 12b. Test the Backend API
 
 ```powershell
 # Health check (no auth required)
@@ -497,7 +527,7 @@ curl https://arkive-func-dev.azurewebsites.net/api/health
 # Should return: {"data":{"status":"healthy","timestamp":"..."}}
 ```
 
-### 11c. Test the Frontend
+### 12c. Test the Frontend
 
 Open your browser and navigate to:
 ```
@@ -506,7 +536,7 @@ https://arkive-web-dev.azurestaticapps.net
 
 You should see the Arkive login page. Clicking "Sign In" should redirect to Microsoft Entra ID login.
 
-### 11d. Create Your First MSP Organization
+### 12d. Create Your First MSP Organization
 
 After logging in, if you see "No organization found", you need to create one. Use the Platform Admin API:
 
@@ -523,7 +553,7 @@ curl -X POST "https://arkive-func-dev.azurewebsites.net/api/v1/organizations" `
 
 ---
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 ### "Function app returns 500 errors"
 
@@ -600,6 +630,79 @@ az monitor app-insights query `
 # View Function App deployment status
 az functionapp deployment list --name arkive-func-dev --resource-group rg-arkive-dev --output table
 ```
+
+---
+
+## 14. Redeployment (Updating Code)
+
+After making code changes, here's how to redeploy each component.
+
+### 14a. Redeploy Backend (Azure Functions)
+
+```powershell
+# 1. Build the release package
+dotnet publish src/Arkive.Functions/Arkive.Functions.csproj `
+  --configuration Release `
+  --output ./publish/functions
+
+# 2. Create a zip of the published output
+Compress-Archive -Path ./publish/functions/* -DestinationPath ./publish/functions.zip -Force
+
+# 3. Deploy to Azure
+az functionapp deployment source config-zip `
+  --resource-group rg-arkive-dev `
+  --name arkive-func-dev `
+  --src ./publish/functions.zip
+
+# 4. Verify it's running
+curl https://arkive-func-dev.azurewebsites.net/api/health
+```
+
+**If you added new database migrations**, run them before deploying the backend:
+
+```powershell
+dotnet ef database update `
+  --project src/Arkive.Data/Arkive.Data.csproj `
+  --startup-project src/Arkive.Functions/Arkive.Functions.csproj `
+  --connection "Server=tcp:arkive-sql-dev.database.windows.net,1433;Database=arkive-db-dev;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;"
+```
+
+### 14b. Redeploy Frontend (Static Web App)
+
+```powershell
+# 1. Build the production frontend
+cd src/arkive-web
+npm install
+npm run build
+
+# 2. Get the deployment token (if you don't have it saved)
+az staticwebapp secrets list `
+  --name arkive-web-dev `
+  --resource-group rg-arkive-dev `
+  --query properties.apiKey --output tsv
+
+# 3. Deploy
+swa deploy `
+  --app-location ./src/arkive-web `
+  --output-location .next `
+  --deployment-token "YOUR-DEPLOYMENT-TOKEN"
+```
+
+**Alternatively**, if you've connected your GitHub repo (Step 8d), just push to `main` and the Static Web App will automatically rebuild and deploy.
+
+### 14c. Redeploy Infrastructure (Bicep)
+
+If you modify the Bicep templates (e.g., adding new resources, changing SKUs):
+
+```powershell
+az deployment group create `
+  --resource-group rg-arkive-dev `
+  --name arkive-deploy `
+  --template-file infra/main.bicep `
+  --parameters infra/parameters/dev.bicepparam
+```
+
+Bicep deployments are idempotent — unchanged resources are skipped, modified resources are updated.
 
 ---
 
