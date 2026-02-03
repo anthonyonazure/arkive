@@ -1,0 +1,20 @@
+# Azure Developer CLI (azd) configuration
+name: arkive
+metadata:
+  template: custom
+
+services:
+  web:
+    project: ./src/arkive-web
+    language: js
+    host: staticwebapp
+
+  api:
+    project: ./src/Arkive.Functions
+    language: dotnet
+    host: function
+
+infra:
+  provider: bicep
+  path: ./infra
+  module: main

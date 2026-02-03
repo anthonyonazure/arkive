@@ -1,0 +1,13 @@
+# Sprint Status - Epic 5: Notification & Approval Workflow
+# Auto-generated and maintained by BMAD workflow
+
+epic: 5
+title: "Notification & Approval Workflow"
+status: complete  # All Epic 5 FRs (FR19-FR22) covered by Stories 5.1-5.4
+
+development_status:
+  5-1: done        # Teams Bot Infrastructure & Proactive Messaging
+  5-2: done        # Approval & Rejection Handling via Teams
+  5-3: done        # Auto-Approval Timer for Unresponsive Requests
+  5-4: done        # Veto Review Dashboard & Rule Adjustment
+  5-5: n/a         # Not defined in epics — all Epic 5 FRs covered by 5.1-5.4

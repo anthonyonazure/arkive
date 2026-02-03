@@ -1,0 +1,17 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+
+# Placeholder - will be configured with Azure deployment steps
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Placeholder
+        run: echo "Staging deployment pipeline - to be configured"

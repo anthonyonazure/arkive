@@ -1,0 +1,11 @@
+# Sprint Status - Epic 6: File Retrieval & Archive Search
+# Auto-generated and maintained by BMAD workflow
+
+epic: 6
+title: "File Retrieval & Archive Search"
+
+development_status:
+  6-1: done        # Archive Search API & Global Search Integration
+  6-2: done        # File Retrieval from Cool & Cold Tiers
+  6-3: done        # File Retrieval from Archive Tier with Rehydration
+  6-4: done        # Retrieval UI — RetrievalPanel Component

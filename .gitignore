@@ -1,0 +1,79 @@
+# =========================
+# .NET / C#
+# =========================
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+*.nupkg
+*.snupkg
+project.lock.json
+*.user
+*.suo
+*.cache
+*.vs/
+
+# =========================
+# Node.js / Next.js
+# =========================
+node_modules/
+.next/
+out/
+.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# =========================
+# Azure Functions
+# =========================
+local.settings.json
+appsettings.Development.json
+
+# =========================
+# Azure
+# =========================
+.azure/
+
+# =========================
+# Bicep compiled output
+# =========================
+infra/**/*.json
+!infra/**/bicepconfig.json
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+*.pfx
+*.key
+*.pem
+
+# =========================
+# IDE / Editor
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =========================
+# Build / Coverage
+# =========================
+coverage/
+*.lcov
+TestResults/
+dist/
+
+# =========================
+# OS
+# =========================
+Desktop.ini
+ehthumbs.db

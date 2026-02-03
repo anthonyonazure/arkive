@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Arkive.Functions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7296",
+      "launchBrowser": false
+    }
+  }
+}

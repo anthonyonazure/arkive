@@ -1,0 +1,22 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm production deployment'
+        required: true
+        type: string
+
+# Placeholder - manual approval trigger for production
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.event.inputs.confirm == 'deploy'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Placeholder
+        run: echo "Production deployment pipeline - to be configured"

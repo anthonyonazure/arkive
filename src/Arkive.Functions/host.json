@@ -1,0 +1,40 @@
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      },
+      "enableLiveMetricsFilters": true
+    },
+    "logLevel": {
+      "default": "Information",
+      "Host.Results": "Error",
+      "Function": "Information",
+      "Host.Aggregator": "Trace"
+    }
+  },
+  "extensions": {
+    "durableTask": {
+      "hubName": "ArkiveTaskHub",
+      "storageProvider": {
+        "type": "AzureStorage"
+      },
+      "maxConcurrentActivityFunctions": 10,
+      "maxConcurrentOrchestratorFunctions": 3
+    },
+    "serviceBus": {
+      "prefetchCount": 0,
+      "autoCompleteMessages": true,
+      "maxAutoLockRenewalDuration": "00:05:00",
+      "maxConcurrentCalls": 10
+    }
+  },
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 3,
+    "minimumInterval": "00:00:05",
+    "maximumInterval": "00:00:30"
+  }
+}

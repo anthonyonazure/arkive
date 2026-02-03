@@ -1,0 +1,11 @@
+# Sprint Status - Epic 8: ROI Reporting & QBR Generation
+# Auto-generated and maintained by BMAD workflow
+
+epic: 8
+title: "ROI Reporting & QBR Generation"
+
+development_status:
+  8-1: done        # Real-Time ROI Metrics & Cost Calculation Engine
+  8-2: done        # QBR Report Generation & Preview
+  8-3: done        # Report Export — PDF & Shareable Link
+  8-4: done        # Reports Hub — Organization-Level Reporting
