@@ -88,18 +88,24 @@ public class TenantOnboardingService : ITenantOnboardingService
 
         if (existing is not null)
         {
-            if (existing.Status is TenantStatus.Pending or TenantStatus.Error)
+            if (existing.Status is TenantStatus.Disconnected)
+            {
+                // Disconnected tenants can be re-onboarded: reset to Pending
+                existing.DisplayName = request.DisplayName;
+                existing.Status = TenantStatus.Pending;
+                existing.ConnectedAt = null;
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            else if (existing.Status is TenantStatus.Pending or TenantStatus.Error)
             {
                 existing.DisplayName = request.DisplayName;
                 existing.Status = TenantStatus.Pending;
                 await _dbContext.SaveChangesAsync(cancellationToken);
-
-                _logger.LogInformation("Returning existing tenant {TenantId} in {Status} state for retry", existing.Id, existing.Status);
-                return MapToDto(existing);
             }
 
-            // Already connected or disconnected — let the unique constraint error propagate
-            throw new DbUpdateException("A tenant with this M365 tenant ID already exists for your organization.", new Exception());
+            // Return existing tenant in any state so the wizard can resume
+            _logger.LogInformation("Returning existing tenant {TenantId} (status: {Status}) for onboarding", existing.Id, existing.Status);
+            return MapToDto(existing);
         }
 
         var entity = new ClientTenant
