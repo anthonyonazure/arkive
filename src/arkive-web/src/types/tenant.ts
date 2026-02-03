@@ -47,6 +47,7 @@ export interface SharePointSite {
   displayName: string;
   storageUsedBytes: number;
   isSelected: boolean;
+  lastModifiedDateTime: string | null;
 }
 
 /** Payload for POST /api/v1/tenants/{id}/sites */

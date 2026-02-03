@@ -71,7 +71,8 @@ public class SiteDiscoveryService : ISiteDiscoveryService
                 SiteId = site.Id ?? string.Empty,
                 Url = site.WebUrl ?? string.Empty,
                 DisplayName = site.DisplayName ?? string.Empty,
-                StorageUsedBytes = storageUsedBytes
+                StorageUsedBytes = storageUsedBytes,
+                LastModifiedDateTime = site.LastModifiedDateTime
             });
         }
 
@@ -100,7 +101,7 @@ public class SiteDiscoveryService : ISiteDiscoveryService
         // The SDK's QueryParameters.Search maps to "$search" which causes an OData syntax error.
         // Use WithUrl to pass the correct parameter.
         var page = await graphClient.Sites
-            .WithUrl("https://graph.microsoft.com/v1.0/sites?search=*&$select=id,displayName,webUrl,siteCollection")
+            .WithUrl("https://graph.microsoft.com/v1.0/sites?search=*&$select=id,displayName,webUrl,siteCollection,lastModifiedDateTime")
             .GetAsync(cancellationToken: cancellationToken);
 
         while (page is not null)

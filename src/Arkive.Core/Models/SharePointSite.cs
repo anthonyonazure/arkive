@@ -10,6 +10,7 @@ public class SharePointSite
     public string DisplayName { get; set; } = string.Empty;
     public long StorageUsedBytes { get; set; }
     public bool IsSelected { get; set; }
+    public DateTimeOffset? LastModifiedDateTime { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 

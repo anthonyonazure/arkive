@@ -40,6 +40,9 @@ public class SharePointSiteConfig : IEntityTypeConfiguration<SharePointSite>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.LastModifiedDateTime)
+            .IsRequired(false);
+
         builder.Property(e => e.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("SYSDATETIMEOFFSET()");

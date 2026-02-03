@@ -10,6 +10,21 @@ import { formatBytes } from "@/lib/utils";
 import { AlertCircle, RefreshCw, Search } from "lucide-react";
 import type { SharePointSite } from "@/types/tenant";
 
+function formatRelativeTime(dateString: string | null): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 1) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 30) return `${diffDays}d ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths}mo ago`;
+  const diffYears = Math.floor(diffMonths / 12);
+  return `${diffYears}y ago`;
+}
+
 interface StepSiteSelectionProps {
   tenantId: string;
   onNext: (selectedSites: SharePointSite[]) => void;
@@ -172,8 +187,13 @@ export function StepSiteSelection({
                 {site.url}
               </div>
             </div>
-            <div className="shrink-0 text-xs text-muted-foreground">
-              {formatBytes(site.storageUsedBytes)}
+            <div className="shrink-0 text-right text-xs text-muted-foreground">
+              <div>{formatBytes(site.storageUsedBytes)}</div>
+              {site.lastModifiedDateTime && (
+                <div title={new Date(site.lastModifiedDateTime).toLocaleDateString()}>
+                  {formatRelativeTime(site.lastModifiedDateTime)}
+                </div>
+              )}
             </div>
           </label>
         ))}

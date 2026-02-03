@@ -199,6 +199,7 @@ public class TenantOnboardingService : ITenantOnboardingService
                 existing.DisplayName = discovered.DisplayName;
                 existing.Url = discovered.Url;
                 existing.StorageUsedBytes = discovered.StorageUsedBytes;
+                existing.LastModifiedDateTime = discovered.LastModifiedDateTime;
                 discovered.IsSelected = existing.IsSelected;
             }
             else
@@ -211,6 +212,7 @@ public class TenantOnboardingService : ITenantOnboardingService
                     Url = discovered.Url,
                     DisplayName = discovered.DisplayName,
                     StorageUsedBytes = discovered.StorageUsedBytes,
+                    LastModifiedDateTime = discovered.LastModifiedDateTime,
                     IsSelected = false
                 });
             }
@@ -257,7 +259,8 @@ public class TenantOnboardingService : ITenantOnboardingService
                 Url = s.Url,
                 DisplayName = s.DisplayName,
                 StorageUsedBytes = s.StorageUsedBytes,
-                IsSelected = s.IsSelected
+                IsSelected = s.IsSelected,
+                LastModifiedDateTime = s.LastModifiedDateTime
             })
             .ToList();
     }

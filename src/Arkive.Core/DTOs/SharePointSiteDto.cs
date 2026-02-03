@@ -7,4 +7,5 @@ public class SharePointSiteDto
     public string DisplayName { get; set; } = string.Empty;
     public long StorageUsedBytes { get; set; }
     public bool IsSelected { get; set; }
+    public DateTimeOffset? LastModifiedDateTime { get; set; }
 }
