@@ -25,10 +25,7 @@ export function MsalAuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setTokenProvider(async () => {
       const accounts = msalInstance.getAllAccounts();
-      console.log("[TokenProvider] accounts:", accounts.length, accounts.map(a => a.username));
-      console.log("[TokenProvider] scopes:", loginRequest.scopes);
       if (accounts.length === 0) {
-        console.warn("[TokenProvider] No accounts found, returning null");
         return null;
       }
 
@@ -37,10 +34,8 @@ export function MsalAuthProvider({ children }: { children: React.ReactNode }) {
           ...loginRequest,
           account: accounts[0],
         });
-        console.log("[TokenProvider] Token acquired, scopes:", response.scopes);
         return response.accessToken;
       } catch (error) {
-        console.error("[TokenProvider] acquireTokenSilent failed:", error);
         if (error instanceof InteractionRequiredAuthError) {
           await msalInstance.acquireTokenRedirect(loginRequest);
         }

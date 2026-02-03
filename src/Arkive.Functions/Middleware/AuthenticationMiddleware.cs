@@ -55,7 +55,7 @@ public class AuthenticationMiddleware : IFunctionsWorkerMiddleware
         if (string.IsNullOrEmpty(token))
         {
             _logger.LogWarning("Missing or invalid Authorization header for function {FunctionName}", functionName);
-            await WriteUnauthorizedResponseAsync(context, "Authentication required.");
+            await WriteUnauthorizedResponseAsync(context, "Missing or invalid Authorization header.");
             return;
         }
 
@@ -68,7 +68,7 @@ public class AuthenticationMiddleware : IFunctionsWorkerMiddleware
                 ValidateIssuer = true,
                 ValidIssuer = $"{_entraIdOptions.Instance}{_entraIdOptions.TenantId}/v2.0",
                 ValidateAudience = true,
-                ValidAudience = _entraIdOptions.Audience,
+                ValidAudiences = new[] { _entraIdOptions.Audience, $"api://{_entraIdOptions.ClientId}" },
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKeys = openIdConfig.SigningKeys,
                 ValidateLifetime = true,
@@ -79,7 +79,7 @@ public class AuthenticationMiddleware : IFunctionsWorkerMiddleware
 
             if (!result.IsValid)
             {
-                _logger.LogWarning("Token validation failed for function {FunctionName}: {Exception}",
+                _logger.LogWarning("Token validation failed for function {FunctionName}: {Error}",
                     functionName, result.Exception?.Message);
                 await WriteUnauthorizedResponseAsync(context, "Invalid token.");
                 return;
@@ -151,12 +151,18 @@ public class AuthenticationMiddleware : IFunctionsWorkerMiddleware
     {
         var claims = result.ClaimsIdentity;
 
-        context.Items["UserId"] = claims.FindFirst(Core.Constants.ArkiveClaimTypes.ObjectId)?.Value ?? string.Empty;
-        context.Items["EntraObjectId"] = claims.FindFirst(Core.Constants.ArkiveClaimTypes.ObjectId)?.Value ?? string.Empty;
-        context.Items["TenantId"] = claims.FindFirst(Core.Constants.ArkiveClaimTypes.TenantId)?.Value ?? string.Empty;
+        var objectId = claims.FindFirst(Core.Constants.ArkiveClaimTypes.ObjectId)?.Value ?? string.Empty;
+        var tenantId = claims.FindFirst(Core.Constants.ArkiveClaimTypes.TenantId)?.Value ?? string.Empty;
+
+        context.Items["UserId"] = objectId;
+        context.Items["EntraObjectId"] = objectId;
+        context.Items["TenantId"] = tenantId;
         context.Items["UserName"] = claims.FindFirst(Core.Constants.ArkiveClaimTypes.Name)?.Value ?? string.Empty;
         context.Items["UserEmail"] = claims.FindFirst(Core.Constants.ArkiveClaimTypes.PreferredUsername)?.Value ?? string.Empty;
-        context.Items["MspOrgId"] = claims.FindFirst(Core.Constants.ArkiveClaimTypes.MspOrgId)?.Value ?? string.Empty;
+
+        // Use extension_MspOrgId claim if present, otherwise fall back to Entra TenantId
+        var mspOrgId = claims.FindFirst(Core.Constants.ArkiveClaimTypes.MspOrgId)?.Value;
+        context.Items["MspOrgId"] = !string.IsNullOrEmpty(mspOrgId) ? mspOrgId : tenantId;
 
         var roles = claims.FindAll(Core.Constants.ArkiveClaimTypes.Roles)
             .Select(c => c.Value)
