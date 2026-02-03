@@ -82,6 +82,26 @@ public class TenantOnboardingService : ITenantOnboardingService
         ArgumentException.ThrowIfNullOrEmpty(request.M365TenantId);
         ArgumentException.ThrowIfNullOrEmpty(request.DisplayName);
 
+        // If a tenant already exists for this M365 tenant in a retryable state, return it
+        var existing = await _dbContext.ClientTenants
+            .FirstOrDefaultAsync(t => t.MspOrgId == mspOrgId && t.M365TenantId == request.M365TenantId, cancellationToken);
+
+        if (existing is not null)
+        {
+            if (existing.Status is TenantStatus.Pending or TenantStatus.Error)
+            {
+                existing.DisplayName = request.DisplayName;
+                existing.Status = TenantStatus.Pending;
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("Returning existing tenant {TenantId} in {Status} state for retry", existing.Id, existing.Status);
+                return MapToDto(existing);
+            }
+
+            // Already connected or disconnected — let the unique constraint error propagate
+            throw new DbUpdateException("A tenant with this M365 tenant ID already exists for your organization.", new Exception());
+        }
+
         var entity = new ClientTenant
         {
             MspOrgId = mspOrgId,
