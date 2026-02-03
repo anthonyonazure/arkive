@@ -45,6 +45,16 @@ public class AuthenticationMiddleware : IFunctionsWorkerMiddleware
     {
         var functionName = context.FunctionDefinition.Name;
 
+        // Skip non-HTTP triggers (orchestrators, activities, timers, service bus, etc.)
+        var isHttpTrigger = context.FunctionDefinition.InputBindings.Values
+            .Any(b => b.Type.Equals("httpTrigger", StringComparison.OrdinalIgnoreCase));
+
+        if (!isHttpTrigger)
+        {
+            await next(context);
+            return;
+        }
+
         if (IsAnonymousEndpoint(functionName))
         {
             await next(context);

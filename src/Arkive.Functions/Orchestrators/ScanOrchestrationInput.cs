@@ -50,6 +50,7 @@ public class AuditLogActivityResult
 public class ScanResultSummary
 {
     public int SitesScanned { get; set; }
+    public int SitesFailed { get; set; }
     public int TotalFiles { get; set; }
     public long TotalBytes { get; set; }
     public int AuditLogFilesUpdated { get; set; }

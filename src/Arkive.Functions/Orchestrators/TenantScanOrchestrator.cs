@@ -60,14 +60,33 @@ public static class TenantScanOrchestrator
                         siteInput));
             }
 
-            // Step 3: Fan-in — collect all results
-            var siteResults = await Task.WhenAll(enumerationTasks);
+            // Step 3: Fan-in — collect results, tolerating per-site failures
+            var successfulResults = new List<SiteFilesResult>();
+            var failedSiteCount = 0;
+
+            foreach (var task in enumerationTasks)
+            {
+                try
+                {
+                    var result = await task;
+                    successfulResults.Add(result);
+                }
+                catch (TaskFailedException ex)
+                {
+                    failedSiteCount++;
+                    logger.LogWarning("Site enumeration failed (skipping): {ErrorMessage}", ex.Message);
+                }
+            }
+
+            logger.LogInformation(
+                "File enumeration complete for tenant {TenantId}: {SuccessCount} succeeded, {FailedCount} failed",
+                input.TenantId, successfulResults.Count, failedSiteCount);
 
             // Step 4: Save file metadata in batches per site
             var totalFiles = 0;
             long totalBytes = 0;
 
-            foreach (var siteResult in siteResults)
+            foreach (var siteResult in successfulResults)
             {
                 if (siteResult.Files.Count == 0) continue;
 
@@ -108,7 +127,8 @@ public static class TenantScanOrchestrator
 
             summary = new ScanResultSummary
             {
-                SitesScanned = sites.Count,
+                SitesScanned = successfulResults.Count,
+                SitesFailed = failedSiteCount,
                 TotalFiles = totalFiles,
                 TotalBytes = totalBytes,
                 AuditLogFilesUpdated = auditLogResult.FilesUpdated,
@@ -116,8 +136,8 @@ public static class TenantScanOrchestrator
             };
 
             logger.LogInformation(
-                "Scan completed for tenant {TenantId}: {SitesScanned} sites, {TotalFiles} files, {TotalBytes} bytes, {AuditLogFiles} audit log updates",
-                input.TenantId, summary.SitesScanned, summary.TotalFiles, summary.TotalBytes, summary.AuditLogFilesUpdated);
+                "Scan completed for tenant {TenantId}: {SitesScanned} sites scanned ({SitesFailed} failed), {TotalFiles} files, {TotalBytes} bytes, {AuditLogFiles} audit log updates",
+                input.TenantId, summary.SitesScanned, summary.SitesFailed, summary.TotalFiles, summary.TotalBytes, summary.AuditLogFilesUpdated);
 
             // Step 7: Publish scan completed event
             await context.CallActivityAsync(
