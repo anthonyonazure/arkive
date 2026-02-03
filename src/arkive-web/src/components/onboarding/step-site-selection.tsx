@@ -34,7 +34,7 @@ export function StepSiteSelection({
   tenantId,
   onNext,
 }: StepSiteSelectionProps) {
-  const { data: sites, isLoading, isError, refetch } = useDiscoverSites(tenantId);
+  const { data: sites, isLoading, isError, isFetching, refetch } = useDiscoverSites(tenantId);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -143,15 +143,26 @@ export function StepSiteSelection({
         {sites.length} sites selected.
       </p>
 
-      {/* Search */}
-      <div className="relative mt-4">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search sites..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
+      {/* Search + Refresh */}
+      <div className="mt-4 flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search sites..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          title="Refresh sites"
+        >
+          <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} />
+        </Button>
       </div>
 
       {/* Select All */}
