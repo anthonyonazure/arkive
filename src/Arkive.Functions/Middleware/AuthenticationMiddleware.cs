@@ -86,19 +86,23 @@ public class AuthenticationMiddleware : IFunctionsWorkerMiddleware
             }
 
             SetClaimsOnContext(context, result);
-
-            await next(context);
         }
         catch (SecurityTokenException ex)
         {
             _logger.LogWarning(ex, "Security token exception for function {FunctionName}", functionName);
             await WriteUnauthorizedResponseAsync(context, "Invalid token.");
+            return;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during authentication for function {FunctionName}", functionName);
             await WriteUnauthorizedResponseAsync(context, "Authentication failed.");
+            return;
         }
+
+        // Execute downstream OUTSIDE the auth try-catch so endpoint errors
+        // are not masked as authentication failures.
+        await next(context);
     }
 
     private static bool IsAnonymousEndpoint(string functionName)
