@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,7 @@ import { CostAnalysis } from "@/components/fleet/cost-analysis";
 import { SiteDetailSheet } from "@/components/fleet/site-detail-sheet";
 import { VetoReviewPanel } from "@/components/fleet/veto-review-panel";
 
-export default function TenantDetailPage({
-  params,
-}: {
-  params: Promise<{ tenantId: string }>;
-}) {
-  const { tenantId } = use(params);
+export default function TenantDetailContent({ tenantId }: { tenantId: string }) {
   const router = useRouter();
   const { data: overview, isLoading, isError, refetch } = useFleetOverview();
   const { data: analytics, isLoading: analyticsLoading, isError: analyticsError } = useTenantAnalytics(tenantId);

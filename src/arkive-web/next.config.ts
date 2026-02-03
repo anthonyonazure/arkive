@@ -1,20 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  async headers() {
-    return [
-      {
-        source: "/auth/consent-callback",
-        headers: [
-          {
-            key: "Cross-Origin-Opener-Policy",
-            value: "same-origin-allow-popups",
-          },
-        ],
-      },
-    ];
-  },
+  output: "export",
+  trailingSlash: true,
 };
 
 export default nextConfig;

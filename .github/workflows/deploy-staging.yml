@@ -20,15 +20,13 @@ jobs:
         working-directory: src/arkive-web
         run: npm ci
 
-      - name: Build Next.js (standalone)
+      - name: Build Next.js (static export)
         working-directory: src/arkive-web
         run: npm run build
 
-      - name: Prepare standalone output
+      - name: Copy SWA config to output
         working-directory: src/arkive-web
-        run: |
-          cp -r .next/static .next/standalone/.next/static
-          if [ -d public ]; then cp -r public .next/standalone/public; fi
+        run: cp staticwebapp.config.json out/staticwebapp.config.json
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -38,6 +36,6 @@ jobs:
           action: "upload"
           skip_app_build: true
           skip_api_build: true
-          app_location: "src/arkive-web/.next/standalone"
+          app_location: "src/arkive-web/out"
           output_location: ""
           api_location: ""

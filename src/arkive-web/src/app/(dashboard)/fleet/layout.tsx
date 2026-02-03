@@ -9,7 +9,7 @@ export default function FleetLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isTenantDetail = pathname.startsWith("/fleet/") && pathname !== "/fleet";
+  const isTenantDetail = pathname.startsWith("/fleet/detail");
 
   if (!isTenantDetail) {
     return <>{children}</>;

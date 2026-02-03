@@ -73,7 +73,7 @@ export function ReportDialog({
       const res = await apiClient.post<SnapshotResponse>("/v1/reports/snapshots", {
         tenantId,
       });
-      const shareUrl = `${window.location.origin}/shared/${res.data.token}`;
+      const shareUrl = `${window.location.origin}/shared/view/?token=${res.data.token}`;
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Share link copied to clipboard", {
         description: "Valid for 30 days. No sign-in required.",

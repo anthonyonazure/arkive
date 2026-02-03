@@ -33,7 +33,7 @@ export function TenantRow({ tenant, compact }: TenantRowProps) {
   if (compact) {
     return (
       <Link
-        href={`/fleet/${tenant.id}`}
+        href={`/fleet/detail/?id=${tenant.id}`}
         className={cn(
           "flex items-center gap-3 rounded-lg border p-2.5 transition-colors hover:bg-accent/50",
           config.rowClassName
@@ -57,7 +57,7 @@ export function TenantRow({ tenant, compact }: TenantRowProps) {
 
   return (
     <Link
-      href={`/fleet/${tenant.id}`}
+      href={`/fleet/detail/?id=${tenant.id}`}
       className={cn(
         "flex items-center gap-4 rounded-lg border p-3.5 transition-colors hover:bg-accent/50",
         config.rowClassName
