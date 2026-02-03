@@ -183,6 +183,20 @@ export function useAdHocRulePreview(tenantId: string | undefined) {
   });
 }
 
+export function useTriggerScan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (tenantId: string) => {
+      const res = await apiClient.post(`/v1/tenants/${tenantId}/scan`, {});
+      return res.data;
+    },
+    onSuccess: (_data, tenantId) => {
+      queryClient.invalidateQueries({ queryKey: ["fleet-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-analytics", tenantId] });
+    },
+  });
+}
+
 export function useDisconnectTenant() {
   const queryClient = useQueryClient();
   return useMutation({

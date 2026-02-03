@@ -13,9 +13,10 @@ import {
   Building2,
   Loader2,
   RefreshCw,
+  ScanSearch,
   Unplug,
 } from "lucide-react";
-import { useFleetOverview, useTenantAnalytics, useSavingsTrends } from "@/hooks/use-fleet";
+import { useFleetOverview, useTenantAnalytics, useSavingsTrends, useTriggerScan } from "@/hooks/use-fleet";
 import { DisconnectTenantDialog } from "@/components/fleet/disconnect-tenant-dialog";
 import { ReportDialog } from "@/components/reports/report-dialog";
 import { getStatusBadge } from "@/components/fleet/tenant-status-config";
@@ -31,6 +32,7 @@ export default function TenantDetailContent({ tenantId }: { tenantId: string }) 
   const { data: analytics, isLoading: analyticsLoading, isError: analyticsError } = useTenantAnalytics(tenantId);
   const { data: trends } = useSavingsTrends(tenantId);
   const [selectedSite, setSelectedSite] = useState<{ id: string; name: string } | null>(null);
+  const scanMutation = useTriggerScan();
 
   const tenant = overview?.tenants.find((t) => t.id === tenantId);
   const statusBadge = tenant ? getStatusBadge(tenant.status) : null;
@@ -122,7 +124,20 @@ export default function TenantDetailContent({ tenantId }: { tenantId: string }) 
               >
                 {statusBadge?.label}
               </Badge>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => scanMutation.mutate(tenantId)}
+                  disabled={scanMutation.isPending}
+                >
+                  {scanMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ScanSearch className="size-4" />
+                  )}
+                  Scan Now
+                </Button>
                 <ReportDialog
                   tenantId={tenantId}
                   tenantName={tenant.displayName}
