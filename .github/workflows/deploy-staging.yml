@@ -28,7 +28,7 @@ jobs:
         working-directory: src/arkive-web
         run: |
           cp -r .next/static .next/standalone/.next/static
-          cp -r public .next/standalone/public
+          if [ -d public ]; then cp -r public .next/standalone/public; fi
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
