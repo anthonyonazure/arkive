@@ -38,10 +38,13 @@ public class SiteDiscoveryService : ISiteDiscoveryService
 
         var allSites = await FetchAllSitesAsync(graphClient, cancellationToken);
 
-        // Filter out personal OneDrive sites and subsites
+        // Filter out personal OneDrive sites, subsites, and content storage partitions
+        // (Loop, Designer, Viva, etc. use /contentstorage/ URLs and don't expose standard drives)
         var filteredSites = allSites
             .Where(s => s.SiteCollection is not null)
-            .Where(s => s.WebUrl is not null && !s.WebUrl.Contains("/personal/", StringComparison.OrdinalIgnoreCase))
+            .Where(s => s.WebUrl is not null
+                && !s.WebUrl.Contains("/personal/", StringComparison.OrdinalIgnoreCase)
+                && !s.WebUrl.Contains("/contentstorage/", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         _logger.LogInformation("Found {TotalCount} total sites, {FilteredCount} after filtering for tenant {M365TenantId}",
