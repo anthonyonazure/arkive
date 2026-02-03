@@ -64,9 +64,8 @@ namespace Arkive.Data.Migrations
 
             // RLS policy for tenant isolation
             migrationBuilder.Sql(@"
-                ALTER SECURITY POLICY rls.tenantAccessPolicy
-                    ADD FILTER PREDICATE rls.fn_tenantAccessPredicate(MspOrgId) ON dbo.ArchiveOperations,
-                    ADD BLOCK PREDICATE rls.fn_tenantAccessPredicate(MspOrgId) ON dbo.ArchiveOperations;
+                ALTER SECURITY POLICY [Security].TenantIsolationPolicy
+                    ADD FILTER PREDICATE [Security].fn_tenantAccessPredicate(MspOrgId) ON dbo.ArchiveOperations
             ");
         }
 
@@ -74,9 +73,8 @@ namespace Arkive.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
-                ALTER SECURITY POLICY rls.tenantAccessPolicy
-                    DROP FILTER PREDICATE ON dbo.ArchiveOperations,
-                    DROP BLOCK PREDICATE ON dbo.ArchiveOperations;
+                ALTER SECURITY POLICY [Security].TenantIsolationPolicy
+                    DROP FILTER PREDICATE ON dbo.ArchiveOperations
             ");
 
             migrationBuilder.DropTable(
