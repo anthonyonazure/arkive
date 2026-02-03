@@ -38,13 +38,10 @@ export function StepAdminConsent({
     popupRef.current = null;
   }, []);
 
-  const handleMessage = useCallback(
-    async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-
-      const data = event.data as ConsentCallbackPayload;
-      if (data?.type !== "consent-callback") return;
-
+  /** Shared logic: process a consent callback payload from any source. */
+  const processConsentResult = useCallback(
+    async (data: ConsentCallbackPayload) => {
+      if (consentProcessedRef.current) return;
       consentProcessedRef.current = true;
       cleanupPopup();
 
@@ -95,22 +92,54 @@ export function StepAdminConsent({
     [tenantId, m365TenantId, consentCallback, onConsentStatusChange, onComplete, cleanupPopup]
   );
 
+  /** Handle postMessage from popup (secondary channel). */
+  const handleMessage = useCallback(
+    (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data as ConsentCallbackPayload;
+      if (data?.type !== "consent-callback") return;
+      processConsentResult(data);
+    },
+    [processConsentResult]
+  );
+
+  /** Handle localStorage change from popup (primary channel). */
+  const handleStorage = useCallback(
+    (event: StorageEvent) => {
+      if (event.key !== "consent-result" || !event.newValue) return;
+      try {
+        const data = JSON.parse(event.newValue) as ConsentCallbackPayload;
+        if (data?.type !== "consent-callback") return;
+        localStorage.removeItem("consent-result");
+        processConsentResult(data);
+      } catch {
+        // ignore parse errors
+      }
+    },
+    [processConsentResult]
+  );
+
   useEffect(() => {
     window.addEventListener("message", handleMessage);
+    window.addEventListener("storage", handleStorage);
     return () => {
       window.removeEventListener("message", handleMessage);
+      window.removeEventListener("storage", handleStorage);
       cleanupPopup();
     };
-  }, [handleMessage, cleanupPopup]);
+  }, [handleMessage, handleStorage, cleanupPopup]);
 
   function openConsentPopup() {
     setErrorMessage("");
     onConsentStatusChange("waiting");
     consentProcessedRef.current = false;
 
-    // Generate CSRF state
+    // Clean up any stale result from a previous attempt
+    localStorage.removeItem("consent-result");
+
+    // Generate CSRF state and store in localStorage (shared with popup window)
     const state = crypto.randomUUID();
-    sessionStorage.setItem("consent-state", state);
+    localStorage.setItem("consent-state", state);
 
     const consentUrl =
       `https://login.microsoftonline.com/${m365TenantId}/adminconsent` +
@@ -136,8 +165,21 @@ export function StepAdminConsent({
     pollRef.current = setInterval(() => {
       if (popup && popup.closed) {
         cleanupPopup();
-        // Only set error if consent hasn't already been processed via postMessage
         if (!consentProcessedRef.current) {
+          // Check localStorage in case the storage event hasn't fired yet
+          try {
+            const raw = localStorage.getItem("consent-result");
+            if (raw) {
+              const data = JSON.parse(raw) as ConsentCallbackPayload;
+              if (data?.type === "consent-callback") {
+                localStorage.removeItem("consent-result");
+                processConsentResult(data);
+                return;
+              }
+            }
+          } catch {
+            // ignore
+          }
           setErrorMessage("The consent window was closed before completing. Please try again.");
           onConsentStatusChange("error");
         }
