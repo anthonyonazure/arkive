@@ -71,6 +71,20 @@ coverage/
 *.lcov
 TestResults/
 dist/
+publish/
+
+# =========================
+# Deployment artifacts
+# =========================
+*.zip
+func-logs/
+
+# =========================
+# Temporary / Debug scripts
+# =========================
+query-db.ps1
+check-token.ps1
+tmp-query.json
 
 # =========================
 # OS

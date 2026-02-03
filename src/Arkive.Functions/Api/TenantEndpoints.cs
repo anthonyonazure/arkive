@@ -204,7 +204,7 @@ public class TenantEndpoints
             return ResponseEnvelopeHelper.Error(
                 System.Net.HttpStatusCode.InternalServerError,
                 "SITE_DISCOVERY_FAILED",
-                $"Site discovery failed: {ex.GetType().Name}: {ex.Message}",
+                "Unable to discover SharePoint sites. Please try again.",
                 context.InvocationId);
         }
     }
