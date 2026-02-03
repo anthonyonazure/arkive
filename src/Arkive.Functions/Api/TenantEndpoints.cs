@@ -198,6 +198,15 @@ public class TenantEndpoints
             _logger.LogWarning(ex, "Invalid tenant state for site discovery: {TenantId}", tenantId);
             return ResponseEnvelopeHelper.BadRequest(ex.Message, context.InvocationId);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Site discovery failed for tenant {TenantId}", tenantId);
+            return ResponseEnvelopeHelper.Error(
+                System.Net.HttpStatusCode.InternalServerError,
+                "SITE_DISCOVERY_FAILED",
+                $"Site discovery failed: {ex.GetType().Name}: {ex.Message}",
+                context.InvocationId);
+        }
     }
 
     [Function("SaveSelectedSites")]
